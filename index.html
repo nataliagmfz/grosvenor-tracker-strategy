@@ -1,1 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grosvenor Short Stay Tracker v0.3</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        :root {
+            --bg: #eeedea;
+            --text: #1a1a18;
+            --text-muted: #6b6b68;
+            --border: #d4d4d0;
+            --card: #ffffff;
+            --green: #2d7a4f;
+            --green-light: #d4edda;
+            --amber: #d97706;
+            --amber-light: #fef3c7;
+            --red: #dc2626;
+            --red-light: #fee2e2;
+            --blue: #2563eb;
+            --blue-light: #dbeafe;
+            --purple: #7c3aed;
+            --grey: #9ca3af;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            margin-bottom: 32px;
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: var(--text-muted);
+        }
+
+        .version {
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .controls {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .control-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--text);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--bg);
+        }
+
+        .btn-primary {
+            background: var(--text);
+            color: var(--bg);
+            border-color: var(--text);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .summary-card {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .summary-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .summary-value {
+            font-family: 'DM Mono', monospace;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .summary-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .calendar-section {
+            background: var(--card);
+            padding: 24px;
+            border-radius: 8px;
+            margin-bottom: 32px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .calendar-title {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .calendar-legend {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+
+        .timeline-container {
+            overflow-x: auto;
+            margin-top: 16px;
+        }
+
+        .timeline-months {
+            display: flex;
+            margin-bottom: 8px;
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            font-weight: 500;
+            padding-left: 180px;
+        }
+
+        .timeline-month {
+            text-align: center;
+            padding: 8px 4px;
+            background: var(--bg);
+            border-radius: 4px;
+        }
+
+        .timeline-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+            min-height: 28px;
+        }
+
+        .timeline-label {
+            width: 180px;
+            font-size: 13px;
+            font-weight: 500;
+            flex-shrink: 0;
+            padding-right: 12px;
+        }
+
+        .timeline-track {
+            flex: 1;
+            height: 24px;
+            background: var(--bg);
+            border-radius: 4px;
+            position: relative;
+            min-width: 800px;
+        }
+
+        .timeline-booking {
+            position: absolute;
+            height: 100%;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .timeline-booking:hover {
+            opacity: 0.8;
+        }
+
+        .booking-confirmed { background: var(--green); }
+        .booking-inhouse { background: var(--amber); }
+        .booking-checkedout { background: var(--blue); }
+        .booking-longstay { background: var(--blue); border: 2px solid var(--text); }
+        .booking-complimentary { background: var(--purple); }
+        .booking-cancelled { background: var(--grey); opacity: 0.4; }
+
+        .property-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 12px 0;
+        }
+
+        .property-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .property-section {
+            background: var(--card);
+            padding: 24px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .property-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .property-title {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .property-stats {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .unit-row {
+            background: var(--bg);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .unit-header {
+            display: grid;
+            grid-template-columns: 200px 1fr 150px;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .unit-name {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .unit-metrics {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .metric {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-value {
+            font-family: 'DM Mono', monospace;
+            font-size: 20px;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+        .recommendation {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .rec-open {
+            background: var(--green-light);
+            color: var(--green);
+        }
+
+        .rec-selective {
+            background: var(--amber-light);
+            color: var(--amber);
+        }
+
+        .rec-close {
+            background: var(--red-light);
+            color: var(--red);
+        }
+
+        .rec-icon {
+            font-size: 18px;
+        }
+
+        .progress-container {
+            margin-bottom: 12px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 32px;
+            background: var(--card);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            border: 2px solid var(--border);
+        }
+
+        .progress-fill {
+            height: 100%;
+            transition: width 0.3s;
+        }
+
+        .progress-label {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'DM Mono', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .strategy-text {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .legend {
+            background: var(--card);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            font-size: 13px;
+        }
+
+        .legend-title {
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .legend-items {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .mono {
+            font-family: 'DM Mono', monospace;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card);
+            padding: 32px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal h3 {
+            font-size: 20px;
+            margin-bottom: 16px;
+        }
+
+        .modal-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-label {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .modal-value {
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .close-modal {
+            margin-top: 20px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Grosvenor Short Stay Tracker</h1>
+        <div class="subtitle">90-Night Compliance & Strategic Pricing Recommendations</div>
+        <div class="version">v0.3 | April 27, 2026</div>
+    </div>
+
+    <div class="controls">
+        <div class="control-group">
+            <input type="file" id="fileInput" class="file-input" accept=".csv">
+            <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">Upload Booking CSV</button>
+            <button class="btn" onclick="restoreSampleData()">Load Sample Data</button>
+            <span id="dataStatus" class="mono" style="margin-left: auto; color: var(--text-muted);"></span>
+        </div>
+    </div>
+
+    <div class="summary-grid">
+        <div class="summary-card">
+            <div class="summary-label">Total Short Stay Nights Sold</div>
+            <div class="summary-value" id="totalSold">0</div>
+            <div class="summary-subtitle">Across all 16 units</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-label">Total Nights Remaining</div>
+            <div class="summary-value" id="totalRemaining">1440</div>
+            <div class="summary-subtitle">Out of 1,440 total capacity</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-label">Overall Utilization</div>
+            <div class="summary-value" id="utilization">0%</div>
+            <div class="summary-subtitle">Of annual 90-night cap</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-label">Budget Performance</div>
+            <div class="summary-value" id="budgetPerf">-</div>
+            <div class="summary-subtitle" id="budgetSubtitle">YTD vs Budget</div>
+        </div>
+    </div>
+
+    <div class="calendar-section">
+        <div class="calendar-header">
+            <div class="calendar-title">Portfolio Calendar 2026</div>
+            <div class="calendar-legend">
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: var(--green);"></div>
+                    <span>Short stay bookings (&lt;90n)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: var(--blue); border: 2px solid var(--text);"></div>
+                    <span>Long stay (≥90n, exempt from cap)</span>
+                </div>
+            </div>
+        </div>
+        <div id="calendarView"></div>
+    </div>
+
+    <div class="legend">
+        <div class="legend-title">Recommendation Guide</div>
+        <div class="legend-items">
+            <div class="legend-item">
+                <div class="legend-dot" style="background: var(--green); width: 12px; height: 12px; border-radius: 50%;"></div>
+                <span><strong>OPEN</strong> - Accept all bookings, plenty of capacity</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="background: var(--amber); width: 12px; height: 12px; border-radius: 50%;"></div>
+                <span><strong>SELECTIVE</strong> - Be strategic, prioritize higher ADRs</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="background: var(--red); width: 12px; height: 12px; border-radius: 50%;"></div>
+                <span><strong>CLOSE</strong> - Only accept premium bookings (ADR £300+)</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="unitsContainer"></div>
+
+    <div id="bookingModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Booking Details</h3>
+            <div id="modalBody"></div>
+            <button class="btn close-modal" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const BUDGETS = {
+            'CLARIDGE': {
+                'April': { revenue: 44856 }, 'May': { revenue: 84470 }, 'June': { revenue: 146749 },
+                'July': { revenue: 165833 }, 'August': { revenue: 106832 }, 'September': { revenue: 85564 },
+                'October': { revenue: 74395 }, 'November': { revenue: 61854 }, 'December': { revenue: 110283 }
+            },
+            'ECCLESTON': {
+                'April': { revenue: 25784 }, 'May': { revenue: 34898 }, 'June': { revenue: 54558 },
+                'July': { revenue: 81632 }, 'August': { revenue: 58680 }, 'September': { revenue: 44234 },
+                'October': { revenue: 35046 }, 'November': { revenue: 31260 }, 'December': { revenue: 48042 }
+            },
+            'KINGSYARD': {
+                'April': { revenue: 31289 }, 'May': { revenue: 37939 }, 'June': { revenue: 49308 },
+                'July': { revenue: 62942 }, 'August': { revenue: 44926 }, 'September': { revenue: 37376 },
+                'October': { revenue: 34603 }, 'November': { revenue: 30134 }, 'December': { revenue: 44006 }
+            }
+        };
+
+        // PROPERTIES will be built dynamically from imported data
+        let PROPERTIES = {
+            'KINGSYARD': ['1', '2', '3'],
+            'CLARIDGE': ['Jeeves', 'Two', 'Three', 'Four', 'Five', 'Six', 'Elizabeth', 'Nightingale'],
+            'ECCLESTON': ['Apartment 2', 'Apartment 7', 'Apartment 14', 'Apartment 15', 'Apartment 16', 'Apartment 17']
+        };
+
+        const ANNUAL_CAP = 90;
+        const COUNTED_STATUSES = ['Confirmed', 'In-house', 'Checked out', 'No Show'];
+        
+        let bookingsData = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            restoreSampleData();
+        });
+
+        document.getElementById('fileInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            try {
+                const text = await file.text();
+                const data = parseCSV(text);
+                processBookingData(data);
+                updateDataStatus(`${data.length} bookings loaded`);
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        });
+
+        function parseCSV(text) {
+            const lines = text.trim().split('\n');
+            const headers = lines[0].replace('\uFEFF', '').split(',').map(h => h.trim().replace(/"/g, ''));
+            return lines.slice(1).map(line => {
+                const values = line.split(',').map(v => v.trim().replace(/"/g, '').replace(/\r/g, ''));
+                const row = {};
+                headers.forEach((header, i) => {
+                    row[header] = values[i] || '';
+                });
+                return row;
+            }).filter(row => row['Property code']); // Filter out empty rows
+        }
+
+        function convertDateToISO(dateStr) {
+            // Convert DD/MM/YYYY to YYYY-MM-DD
+            if (!dateStr || dateStr === '') return '';
+            const parts = dateStr.split('/');
+            if (parts.length !== 3) return dateStr;
+            const day = parts[0].padStart(2, '0');
+            const month = parts[1].padStart(2, '0');
+            const year = parts[2];
+            return `${year}-${month}-${day}`;
+        }
+
+        function processBookingData(data) {
+            bookingsData = data.map(row => ({
+                firstName: row['First name'] || '',
+                lastName: row['Last name'] || '',
+                unit: row['Unit'] || '',
+                propertyCode: row['Property code'] || '',
+                status: row['Status'] || '',
+                arrival: convertDateToISO(row['Arrival']),
+                departure: convertDateToISO(row['Departure']),
+                grossAmount: parseFloat(row['Gross amount']) || 0,
+                numberOfDays: parseInt(row['Number of days']) || 0,
+                channel: row['Channel'] || '',
+                source: row['Source'] || ''
+            })).filter(b => b.unit && b.propertyCode); // Only keep bookings with units assigned
+            
+            // Build PROPERTIES dynamically from actual data
+            const propUnits = {};
+            bookingsData.forEach(booking => {
+                if (!propUnits[booking.propertyCode]) {
+                    propUnits[booking.propertyCode] = new Set();
+                }
+                propUnits[booking.propertyCode].add(booking.unit);
+            });
+            
+            // Convert sets to sorted arrays and update global PROPERTIES
+            Object.keys(propUnits).forEach(prop => {
+                PROPERTIES[prop] = Array.from(propUnits[prop]).sort();
+            });
+            
+            renderAll();
+        }
+
+        function restoreSampleData() {
+            const sampleData = [];
+            const months = ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06', '2026-07', '2026-08', '2026-09', '2026-10', '2026-11', '2026-12'];
+            const firstNames = ['John', 'Emma', 'Sarah', 'Michael', 'Lisa', 'David'];
+            const lastNames = ['Smith', 'Brown', 'Wilson', 'Taylor', 'Anderson'];
+            const channels = ['Booking.com', 'Airbnb', 'Direct', 'Expedia'];
+            
+            let bookingId = 1000;
+
+            // Reset to default unit configuration
+            PROPERTIES = {
+                'KINGSYARD': ['1', '2', '3'],
+                'CLARIDGE': ['Jeeves', 'Two', 'Three', 'Four', 'Five', 'Six', 'Elizabeth', 'Nightingale'],
+                'ECCLESTON': ['Apartment 2', 'Apartment 7', 'Apartment 14', 'Apartment 15', 'Apartment 16', 'Apartment 17']
+            };
+
+            Object.keys(PROPERTIES).forEach(propCode => {
+                PROPERTIES[propCode].forEach(unit => {
+                    const targetNights = 35 + Math.floor(Math.random() * 50);
+                    let nightsSoFar = 0;
+                    
+                    while (nightsSoFar < targetNights) {
+                        const month = months[Math.floor(Math.random() * months.length)];
+                        const day = String(1 + Math.floor(Math.random() * 28)).padStart(2, '0');
+                        const arrival = `${month}-${day}`;
+                        
+                        const isLongStay = Math.random() < 0.08;
+                        const nights = isLongStay ? 90 + Math.floor(Math.random() * 60) : 3 + Math.floor(Math.random() * 12);
+                        
+                        const arrivalDate = new Date(arrival);
+                        const departureDate = new Date(arrivalDate);
+                        departureDate.setDate(departureDate.getDate() + nights);
+                        
+                        const rand = Math.random();
+                        let status;
+                        if (rand < 0.45) status = 'Confirmed';
+                        else if (rand < 0.65) status = 'Checked out';
+                        else if (rand < 0.8) status = 'In-house';
+                        else if (rand < 0.85) status = 'No Show';
+                        else status = 'Cancelled';
+                        
+                        const isComp = Math.random() < 0.03;
+                        const grossAmount = isComp ? 0 : (180 + Math.random() * 220) * nights;
+                        
+                        sampleData.push({
+                            firstName: firstNames[Math.floor(Math.random() * firstNames.length)],
+                            lastName: lastNames[Math.floor(Math.random() * lastNames.length)],
+                            unit: unit,
+                            propertyCode: propCode,
+                            status: status,
+                            arrival: arrival,
+                            departure: departureDate.toISOString().split('T')[0],
+                            grossAmount: Math.round(grossAmount),
+                            numberOfDays: nights,
+                            channel: channels[Math.floor(Math.random() * channels.length)],
+                            source: channels[Math.floor(Math.random() * channels.length)]
+                        });
+                        
+                        if (status !== 'Cancelled' && !isLongStay && !isComp) {
+                            nightsSoFar += nights;
+                        }
+                    }
+                });
+            });
+
+            bookingsData = sampleData;
+            renderAll();
+            updateDataStatus(`Sample data: ${sampleData.length} bookings`);
+        }
+
+        function updateDataStatus(msg) {
+            document.getElementById('dataStatus').textContent = msg;
+        }
+
+        function renderAll() {
+            renderSummary();
+            renderCalendar();
+            renderUnits();
+        }
+
+        function renderCalendar() {
+            const container = document.getElementById('calendarView');
+            
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const monthDays = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+            const totalDays = monthDays.reduce((a, b) => a + b, 0);
+
+            // Calculate today's position
+            const today = new Date();
+            const yearStart = new Date('2026-01-01');
+            const todayDay = Math.floor((today - yearStart) / (1000 * 60 * 60 * 24));
+            const todayPosition = (todayDay / totalDays * 100).toFixed(2);
+
+            let html = '<div class="timeline-container" style="position: relative;">';
+            
+            // Today indicator line
+            html += `<div style="position: absolute; left: calc(180px + ${todayPosition}%); top: 0; bottom: 0; width: 2px; background: var(--red); z-index: 10; pointer-events: none;"></div>`;
+            html += `<div style="position: absolute; left: calc(180px + ${todayPosition}%); top: -8px; transform: translateX(-50%); background: var(--red); color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; z-index: 11;">TODAY</div>`;
+            
+            html += '<div class="timeline-months">';
+            monthDays.forEach((days, i) => {
+                const width = (days / totalDays * 100).toFixed(2);
+                html += `<div class="timeline-month" style="width: ${width}%">${months[i]}</div>`;
+            });
+            html += '</div>';
+
+            Object.keys(PROPERTIES).forEach((propCode, propIdx) => {
+                if (propIdx > 0) {
+                    html += '<div class="property-divider"></div>';
+                }
+                html += `<div class="property-label">${propCode}</div>`;
+
+                PROPERTIES[propCode].forEach(unit => {
+                    const unitBookings = bookingsData.filter(b => b.unit === unit);
+
+                    html += '<div class="timeline-row">';
+                    html += `<div class="timeline-label">${unit}</div>`;
+                    html += '<div class="timeline-track">';
+
+                    unitBookings.forEach(booking => {
+                        // Skip cancelled and complimentary bookings in the calendar view
+                        if (booking.status === 'Cancelled' || booking.grossAmount === 0) {
+                            return;
+                        }
+
+                        const start = new Date(booking.arrival);
+                        const yearStart = new Date('2026-01-01');
+                        const startDay = Math.floor((start - yearStart) / (1000 * 60 * 60 * 24));
+                        const duration = booking.numberOfDays;
+
+                        const left = (startDay / totalDays * 100).toFixed(2);
+                        const width = (duration / totalDays * 100).toFixed(2);
+
+                        // Simplified color scheme
+                        let bookingClass = 'booking-confirmed'; // Green for all counted bookings
+                        if (booking.numberOfDays >= 90) {
+                            bookingClass = 'booking-longstay'; // Blue for long stays
+                        }
+
+                        html += `<div class="timeline-booking ${bookingClass}" 
+                            style="left: ${left}%; width: ${width}%"
+                            onclick='showBookingModal(${JSON.stringify(booking).replace(/'/g, "&apos;")})'
+                            title="${booking.firstName} ${booking.lastName} - ${booking.numberOfDays}n">
+                        </div>`;
+                    });
+
+                    html += '</div></div>';
+                });
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function renderSummary() {
+            let totalSold = 0;
+            let totalRevenue = 0;
+            
+            Object.keys(PROPERTIES).forEach(propCode => {
+                PROPERTIES[propCode].forEach(unit => {
+                    const nightsUsed = calculateNightsUsed(unit);
+                    totalSold += nightsUsed;
+                    
+                    const revenue = bookingsData
+                        .filter(b => b.unit === unit && b.status !== 'Cancelled')
+                        .reduce((sum, b) => sum + b.grossAmount, 0);
+                    totalRevenue += revenue;
+                });
+            });
+
+            const totalCapacity = Object.values(PROPERTIES).flat().length * ANNUAL_CAP;
+            const totalRemaining = totalCapacity - totalSold;
+            const utilization = ((totalSold / totalCapacity) * 100).toFixed(1);
+
+            document.getElementById('totalSold').textContent = totalSold.toLocaleString();
+            document.getElementById('totalRemaining').textContent = totalRemaining.toLocaleString();
+            document.getElementById('utilization').textContent = utilization + '%';
+            document.getElementById('budgetPerf').textContent = '£' + Math.round(totalRevenue / 1000) + 'K';
+        }
+
+        function calculateNightsUsed(unit) {
+            return bookingsData
+                .filter(b => 
+                    b.unit === unit &&
+                    COUNTED_STATUSES.includes(b.status) &&
+                    b.numberOfDays < 90 &&
+                    b.grossAmount > 0
+                )
+                .reduce((sum, b) => {
+                    // Calculate how many nights of this booking fall within 2026
+                    const arrival = new Date(b.arrival);
+                    const departure = new Date(b.departure);
+                    const year2026Start = new Date('2026-01-01');
+                    const year2026End = new Date('2026-12-31');
+                    
+                    // If booking is entirely outside 2026, return 0
+                    if (departure <= year2026Start || arrival > year2026End) {
+                        return sum;
+                    }
+                    
+                    // Calculate the overlap with 2026
+                    const overlapStart = arrival < year2026Start ? year2026Start : arrival;
+                    const overlapEnd = departure > year2026End ? year2026End : departure;
+                    
+                    // Calculate nights in 2026 (difference in days)
+                    const nightsIn2026 = Math.ceil((overlapEnd - overlapStart) / (1000 * 60 * 60 * 24));
+                    
+                    return sum + nightsIn2026;
+                }, 0);
+        }
+
+        function getRecommendation(nightsUsed, nightsRemaining, propCode, currentMonth) {
+            const percentUsed = (nightsUsed / ANNUAL_CAP) * 100;
+            const isPeakSeason = ['May', 'June', 'July', 'August'].includes(currentMonth);
+            
+            if (nightsRemaining <= 15) {
+                return {
+                    status: 'CLOSE',
+                    class: 'rec-close',
+                    icon: '🔒',
+                    text: `Only ${nightsRemaining} nights left. Accept only premium bookings (ADR £350+). Prioritize peak season dates.`
+                };
+            } else if (nightsRemaining <= 35) {
+                return {
+                    status: 'SELECTIVE',
+                    class: 'rec-selective',
+                    icon: '⚠️',
+                    text: `${nightsRemaining} nights remaining. Be strategic: prioritize 5+ night stays, target ADR £280+. Reserve capacity for July-August peak.`
+                };
+            } else if (nightsRemaining <= 60) {
+                return {
+                    status: 'SELECTIVE',
+                    class: 'rec-selective',
+                    icon: '⚠️',
+                    text: `${nightsRemaining} nights available. Maintain standards: min ADR £220, prefer 3+ night bookings. Monitor peak season demand.`
+                };
+            } else {
+                return {
+                    status: 'OPEN',
+                    class: 'rec-open',
+                    icon: '✓',
+                    text: `${nightsRemaining} nights remaining. Good capacity available. Accept quality bookings, maintain ADR £200+ baseline.`
+                };
+            }
+        }
+
+        function renderUnits() {
+            const container = document.getElementById('unitsContainer');
+            let html = '';
+            const currentMonth = new Date().toLocaleString('default', { month: 'long' });
+
+            Object.keys(PROPERTIES).forEach(propCode => {
+                const units = PROPERTIES[propCode];
+                let propNightsSold = 0;
+                let propRevenue = 0;
+
+                units.forEach(unit => {
+                    const nightsUsed = calculateNightsUsed(unit);
+                    propNightsSold += nightsUsed;
+                    
+                    const revenue = bookingsData
+                        .filter(b => b.unit === unit && b.status !== 'Cancelled')
+                        .reduce((sum, b) => sum + b.grossAmount, 0);
+                    propRevenue += revenue;
+                });
+
+                html += `
+                    <div class="property-section">
+                        <div class="property-header">
+                            <div class="property-title">${propCode}</div>
+                            <div class="property-stats">
+                                ${units.length} units · ${propNightsSold} nights sold · £${Math.round(propRevenue).toLocaleString()} revenue
+                            </div>
+                        </div>
+                `;
+
+                units.forEach(unit => {
+                    const nightsUsed = calculateNightsUsed(unit);
+                    const nightsRemaining = ANNUAL_CAP - nightsUsed;
+                    const percentage = (nightsUsed / ANNUAL_CAP * 100).toFixed(1);
+                    
+                    const rec = getRecommendation(nightsUsed, nightsRemaining, propCode, currentMonth);
+                    
+                    let progressColor = 'var(--green)';
+                    if (percentage >= 80) progressColor = 'var(--red)';
+                    else if (percentage >= 60) progressColor = 'var(--amber)';
+
+                    const revenue = bookingsData
+                        .filter(b => b.unit === unit && b.status !== 'Cancelled')
+                        .reduce((sum, b) => sum + b.grossAmount, 0);
+                    
+                    const avgADR = nightsUsed > 0 ? Math.round(revenue / nightsUsed) : 0;
+
+                    html += `
+                        <div class="unit-row">
+                            <div class="unit-header">
+                                <div class="unit-name">${unit}</div>
+                                <div class="unit-metrics">
+                                    <div class="metric">
+                                        <div class="metric-label">Nights Sold</div>
+                                        <div class="metric-value">${nightsUsed}</div>
+                                    </div>
+                                    <div class="metric">
+                                        <div class="metric-label">Remaining</div>
+                                        <div class="metric-value" style="color: ${nightsRemaining < 20 ? 'var(--red)' : 'var(--green)'}">
+                                            ${nightsRemaining}
+                                        </div>
+                                    </div>
+                                    <div class="metric">
+                                        <div class="metric-label">Avg ADR</div>
+                                        <div class="metric-value">£${avgADR}</div>
+                                    </div>
+                                </div>
+                                <div class="recommendation ${rec.class}">
+                                    <span class="rec-icon">${rec.icon}</span>
+                                    ${rec.status}
+                                </div>
+                            </div>
+                            
+                            <div class="progress-container">
+                                <div class="progress-header">
+                                    <span><strong>${percentage}%</strong> of annual cap used</span>
+                                    <span class="mono">${nightsUsed} / ${ANNUAL_CAP} nights</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${Math.min(100, percentage)}%; background: ${progressColor}"></div>
+                                    <div class="progress-label"></div>
+                                </div>
+                            </div>
+
+                            <div class="strategy-text">
+                                <strong>Strategy:</strong> ${rec.text}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function showBookingModal(booking) {
+            const modal = document.getElementById('bookingModal');
+            const title = document.getElementById('modalTitle');
+            const body = document.getElementById('modalBody');
+
+            title.textContent = `${booking.firstName} ${booking.lastName}`;
+
+            let html = '';
+            const fields = [
+                { label: 'Unit', value: booking.unit },
+                { label: 'Property', value: booking.propertyCode },
+                { label: 'Status', value: booking.status },
+                { label: 'Channel', value: booking.channel },
+                { label: 'Arrival', value: booking.arrival },
+                { label: 'Departure', value: booking.departure },
+                { label: 'Nights', value: booking.numberOfDays },
+                { label: 'Gross Amount', value: `£${Math.round(booking.grossAmount).toLocaleString()}` },
+                { label: 'Classification', value: getBookingClassification(booking) }
+            ];
+
+            fields.forEach(field => {
+                html += `
+                    <div class="modal-row">
+                        <div class="modal-label">${field.label}</div>
+                        <div class="modal-value">${field.value}</div>
+                    </div>
+                `;
+            });
+
+            body.innerHTML = html;
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('bookingModal').classList.remove('active');
+        }
+
+        function getBookingClassification(booking) {
+            if (booking.status === 'Cancelled') return 'Cancelled (excluded)';
+            if (booking.grossAmount === 0) return 'Complimentary (excluded)';
+            if (booking.numberOfDays >= 90) return 'Long Stay (exempt from cap)';
+            if (COUNTED_STATUSES.includes(booking.status)) return 'Counts toward 90-night cap';
+            return 'Unknown';
+        }
+
+        document.getElementById('bookingModal').addEventListener('click', (e) => {
+            if (e.target.id === 'bookingModal') closeModal();
+        });
+    </script>
+</body>
+</html>
