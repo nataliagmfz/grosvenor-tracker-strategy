@@ -1069,40 +1069,43 @@ function renderDayGrid(){
 function renderStrategy(){
   const yFrac=Math.min(1,Math.max(0.001,dayDiff(Y_START,TODAY)/Y_DAYS));
   const expected=90*yFrac;
-  let portUsed=0,portCap=0,atRisk=0,breach=0;
-  let html='<thead><tr><th>Property / Unit type</th><th class="num">Units</th><th class="num">Short nights (avg/unit)</th><th>Pace</th><th class="num">Headroom</th><th class="num">ADR short</th><th class="num">ADR long</th><th class="num">Occ 90d</th><th>Recommended action</th></tr></thead><tbody>';
+  let portUsed=0,portCap=0,unitsRisk=0,unitsBreach=0;
+  let html='<thead><tr><th>Property / Unit type</th><th class="num">Units</th><th class="center">Over 90</th><th class="num">Avg / worst unit</th><th>Pace</th><th class="num">Headroom</th><th class="num">ADR short</th><th class="num">ADR long</th><th class="num">Occ 90d</th><th>Recommended action</th></tr></thead><tbody>';
   for(const prop of state.properties){
     const pu=state.units.filter(u=>u.property===prop); if(!pu.length)continue;
-    html+='<tr class="subtotal"><td colspan="9">'+esc(propName(prop))+'</td></tr>';
+    html+='<tr class="subtotal"><td colspan="10">'+esc(propName(prop))+'</td></tr>';
     const groups=[...new Set(pu.map(u=>u.group||'—'))].sort();
     for(const grp of groups){
       const us=pu.filter(u=>(u.group||'—')===grp);
       const n=us.length;
-      const used=us.reduce((t,u)=>t+complianceNightsForUnit(u),0);
-      const cap=n*90, avg=used/n, head=cap-used;
+      const nights=us.map(u=>complianceNightsForUnit(u));
+      const used=nights.reduce((a,b)=>a+b,0);
+      const cap=n*90, avg=used/n, head=cap-used, worst=Math.max(...nights);
+      const over=nights.filter(x=>x>90).length, near=nights.filter(x=>x>=75&&x<=90).length;
+      unitsBreach+=over; unitsRisk+=near;
       let sN=0,sG=0,lN=0,lG=0,occ=0;
       for(const u of us){
-        for(const r of activeUnitBookings([u])){
-          if(r.gross<=0)continue;
-          if(isLongStay(r)){lN+=nightsIn2026(r);lG+=r.gross;} else {sN+=nightsIn2026(r);sG+=r.gross;}
-        }
+        for(const r of activeUnitBookings([u])){ if(r.gross<=0)continue;
+          if(isLongStay(r)){lN+=nightsIn2026(r);lG+=r.gross;} else {sN+=nightsIn2026(r);sG+=r.gross;} }
         occ+=bookedNights(u,TODAY,addDays(TODAY,90));
       }
       const adrS=sN?sG/sN:0, adrL=lN?lG/lN:0, occPct=Math.round(occ/(n*90)*100);
-      const st=complianceStatus(avg);
-      if(avg>90)breach++; else if(avg>=75)atRisk++;
+      const st=complianceStatus(worst);   // severity from the worst unit — the cap is per unit
       let pace,pc;
       if(avg>expected*1.15){pace='Ahead';pc='orange';}
       else if(avg<expected*0.6){pace='Behind';pc='green';}
       else {pace='On pace';pc='blue';}
       let rec;
-      if(avg>90)rec='⚠ Breach — pause short sells; convert demand to 28+ long stays';
-      else if(avg>=75)rec='At risk — steer new demand to 28+ (Month) rate; guard remaining allowance';
+      if(over>0)rec='⚠ '+over+' unit'+(over>1?'s':'')+' over 90 — pause short sells on '+(over>1?'those':'it')+'; convert to 28+ long stays';
+      else if(near>0)rec='At risk — steer new demand to 28+ (Month) rate; guard remaining allowance';
       else if(occPct<50 && head/n>30)rec='Headroom — push 7–14 night short stays to lift RevPAR';
       else rec='Balanced — maintain current short/long mix';
+      const overBadge= over>0?'<span class="pill red">'+over+'/'+n+'</span>'
+                      :(near>0?'<span class="pill orange">'+near+'/'+n+'</span>':'<span class="pill green">0</span>');
       html+='<tr><td style="padding-left:22px">'+esc(grp)+'</td>'+
         '<td class="num mono">'+n+'</td>'+
-        '<td class="num mono">'+used+'n <span class="pill '+st.pill+'">'+avg.toFixed(0)+'/90</span></td>'+
+        '<td class="center">'+overBadge+'</td>'+
+        '<td class="num mono">'+avg.toFixed(0)+' / <span class="pill '+st.pill+'">'+worst+'n</span></td>'+
         '<td><span class="pill '+pc+'">'+pace+'</span></td>'+
         '<td class="num mono">'+head+'n</td>'+
         '<td class="num mono">'+(adrS?fmtMoney(adrS):'—')+'</td>'+
@@ -1117,8 +1120,8 @@ function renderStrategy(){
   const longUnits=state.units.filter(u=>activeUnitBookings([u]).some(r=>isLongStay(r))).length;
   const cards=[
     {label:'Portfolio 90-night use',value:consume+'%',sub:portUsed+'n of '+portCap+'n cap',cls:consume>=83?'alert':consume>=66?'warn':'good'},
-    {label:'Unit types at risk',value:atRisk,sub:'≥75 avg nights/unit',cls:atRisk?'warn':'good'},
-    {label:'Unit types in breach',value:breach,sub:'>90 avg nights/unit',cls:breach?'alert':'good'},
+    {label:'Units at risk',value:unitsRisk,sub:'75–90 nights used',cls:unitsRisk?'warn':'good'},
+    {label:'Units in breach',value:unitsBreach,sub:'over 90 nights — per unit',cls:unitsBreach?'alert':'good'},
     {label:'Long-stay units',value:longUnits,sub:'Hold a 90-exempt booking'},
   ];
   document.getElementById('strat-kpis').innerHTML=cards.map(c=>'<div class="card '+(c.cls||'')+'"><div class="label">'+c.label+'</div><div class="value">'+c.value+'</div><div class="sub">'+c.sub+'</div></div>').join('');
